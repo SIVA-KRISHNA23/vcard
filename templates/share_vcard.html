@@ -1,0 +1,185 @@
+{% block content %}
+<div class="share-container">
+    <div class="share-header">
+        <h2>Share VCard: {{ user['name'] }}</h2>
+    </div>
+
+    <div class="share-form-container">
+        {% if message %}
+        <div class="success-message" style="display:none;">{{ message }}</div>
+        {% endif %}
+
+        <form method="POST" action="{{ url_for('share_vcard', user_id=user['id']) }}">
+            <div class="form-group">
+                <label for="email">Recipient Email</label>
+                <input type="email" id="email" name="email" placeholder="Enter recipient's email" required>
+            </div>
+
+            <div class="form-group">
+                <label for="message">Optional Message</label>
+                <textarea id="message" name="message" placeholder="Add a message (optional)"></textarea>
+            </div>
+
+            <div class="form-buttons">
+                <button type="submit" class="btn-send">Send VCard</button>
+                <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-back">Back</a>
+            </div>
+        </form>
+    </div>
+</div>
+
+{% if message %}
+<!-- SweetAlert popup for success -->
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    Swal.fire({
+        icon: 'success',
+        title: 'Success!',
+        text: '{{ message }}',
+        confirmButtonColor: '#800080',
+        background: '#fefefe',
+        color: '#333',
+        showClass: { popup: 'animate__animated animate__fadeInDown' },
+        hideClass: { popup: 'animate__animated animate__fadeOutUp' }
+    });
+});
+</script>
+{% endif %}
+
+<style>
+body {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+    display: flex;
+    justify-content: center;
+    padding: 50px 0;
+}
+
+.share-container {
+    background: #ffffff;
+    max-width: 500px;
+    width: 90%;
+    padding: 30px;
+    border-radius: 15px;
+    box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+    text-align: center;
+    position: relative;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.share-container:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 15px 40px rgba(0,0,0,0.3);
+}
+
+.share-header h2 {
+    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+    color: white;
+    font-size: 1.6rem;
+    font-weight: 700;
+    padding: 12px;
+    border-radius: 12px 12px 0 0;
+    margin-bottom: 20px;
+    text-shadow: 1px 1px 3px rgba(0,0,0,0.2);
+}
+
+.share-form-container {
+    text-align: left;
+}
+
+.form-group {
+    margin-bottom: 15px;
+}
+
+.form-group label {
+    display: block;
+    font-weight: 600;
+    margin-bottom: 6px;
+    font-size: 1rem;
+    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    color: hsl(345, 80%, 50%);
+}
+
+.form-group input, .form-group textarea {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    transition: box-shadow 0.3s, border 0.3s;
+}
+
+.form-group input:focus, .form-group textarea:focus {
+    outline: none;
+    border: 1px solid hsl(345, 80%, 50%);
+    box-shadow: 0 0 8px rgba(128,0,128,0.3);
+}
+
+.form-group textarea {
+    resize: vertical;
+    min-height: 80px;
+}
+
+.form-buttons {
+    display: flex;
+    justify-content: space-between;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.btn-send {
+    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    font-weight: 600;
+    border: none;
+    cursor: pointer;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn-send:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+}
+
+.btn-back {
+    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+    color: white;
+    padding: 10px 20px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    text-align: center;
+    display: inline-block;
+    transition: transform 0.3s, box-shadow 0.3s;
+}
+
+.btn-back:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+}
+
+.success-message {
+    background: #28a745;
+    color: white;
+    padding: 10px 15px;
+    border-radius: 8px;
+    margin-bottom: 15px;
+    text-align: center;
+    font-weight: 600;
+    animation: fadeIn 0.5s ease forwards;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-5px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+</style>
+{% endblock %}

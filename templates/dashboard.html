@@ -1,0 +1,252 @@
+{% set disable_main = True %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="dashboard-wrapper">
+    <!-- Header -->
+    <div class="dashboard-header">
+        <h2 class="page-title">Dashboard</h2>
+    </div>
+
+    <!-- Controls -->
+    <div class="dashboard-controls">
+        <input type="text" id="searchInput" placeholder="Search by name/email" onkeyup="filterUsers()">
+        <a href="{{ url_for('create_user') }}" class="btn-create">+ Create New User</a>
+        <a href="{{ url_for('export_users') }}" class="btn-create btn-csv">Export All CSV</a>
+        <a href="{{ url_for('download_all_vcards') }}" class="btn-create btn-zip">Download All VCards</a>
+    </div>
+
+    <!-- Users Grid -->
+    <div class="users-grid" id="usersGrid">
+        {% for user in users %}
+        <div class="user-card">
+            {% if user['photo'] %}
+            <img src="{{ url_for('static', filename='uploads/' ~ user['photo']) }}" alt="Photo" class="user-photo">
+            {% else %}
+            <img src="{{ url_for('static', filename='uploads/default.png') }}" alt="Photo" class="user-photo">
+            {% endif %}
+            <h3>{{ user['name'] }}</h3>
+            <p><b>Email:</b> {{ user['email'] }}</p>
+            <p><b>Phone:</b> {{ user['phone'] }}</p>
+            {% if user['qrcode'] %}
+            <img src="{{ url_for('static', filename='qrcodes/' ~ user['qrcode']) }}" alt="QR" class="qr-code">
+            {% endif %}
+            <div class="card-buttons">
+                <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-view">View VCard</a>
+                <a href="{{ url_for('download_vcard', user_id=user['id']) }}" class="btn-qr">Download QR</a>
+                
+            </div>
+        </div>
+        <footer class="dashboard-footer">
+    Powered by <b>BHSPL</b>
+</footer>
+        {% endfor %}
+    </div>
+</div>
+
+<style>
+/* 🌈 Dashboard Background */
+body {
+    background: linear-gradient(120deg, #b3124a, #7b2cbf);
+    font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+    color: #fff;
+}
+
+/* Wrapper */
+.dashboard-wrapper {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px;
+}
+
+/* Header */
+.dashboard-header {
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    padding-bottom: 10px;
+}
+
+.page-title {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+}
+/* Sticky Footer */
+.dashboard-footer {
+    text-align: center;
+    padding: 15px 0;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    font-weight: 600;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    border-radius: 0 0 16px 16px;
+    position: fixed;       /* stick to bottom */
+    bottom: 0;             /* at the bottom of viewport */
+    left: 0;
+    width: 100%;           /* full width */
+    z-index: 100;          /* above other content */
+}
+
+
+/* Controls */
+.dashboard-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.dashboard-controls input[type="text"] {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    flex: 1;
+    min-width: 200px;
+    font-size: 1rem;
+    background: #fff;
+    color: #333;
+    transition: 0.3s;
+}
+
+.dashboard-controls input[type="text"]:focus {
+    outline: none;
+    box-shadow: 0 0 6px rgba(139,0,0,0.4);
+}
+
+/* Buttons */
+.btn-create {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+}
+
+.btn-create:hover {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+}
+
+/* CSV Export Button */
+.btn-csv {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+}
+
+.btn-csv:hover {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+}
+
+/* ZIP Download Button */
+.btn-zip {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+}
+
+.btn-zip:hover {
+    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+}
+
+/* Users Grid */
+.users-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    gap: 20px;
+}
+
+/* User Card */
+.user-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 25px 20px;
+    text-align: center;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+    transition: transform 0.3s, box-shadow 0.3s;
+    color: #fff;
+}
+
+.user-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.4);
+}
+
+/* Images */
+.user-photo {
+    width: 100px;
+    height: 100px;
+    border-radius: 50%;
+    object-fit: cover;
+    margin-bottom: 12px;
+    border: 2px solid #fff;
+}
+
+.qr-code {
+    margin: -30px 0;
+    width: 80px;
+    height: 80px;
+}
+
+/* Card Buttons */
+.card-buttons {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: -5px;
+    flex-wrap: nowrap;
+}
+
+.btn-view, .btn-qr {
+    padding: 8px 14px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    color: #fff;
+    flex: 0 0 auto;
+    transition: 0.3s;
+}
+
+.btn-view {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+.btn-view:hover {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+.btn-qr {
+    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+}
+
+.btn-qr:hover {
+    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+}
+
+/* Responsive */
+@media(max-width: 768px){
+    .users-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .dashboard-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+</style>
+
+<script>
+function filterUsers() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.user-card');
+    cards.forEach(card => {
+        const name = card.querySelector('h3').innerText.toLowerCase();
+        const email = card.querySelector('p').innerText.toLowerCase();
+        if(name.includes(input) || email.includes(input)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+{% endblock %}

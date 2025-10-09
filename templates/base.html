@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>{{ title if title else 'VCard App' }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+    <style>
+        /* ----- General Styles ----- */
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+           background: linear-gradient(90deg, #b3124a, #7b2cbf) !important;
+            /* color: #fff; */
+            min-height: 100vh;
+            transition: background 0.3s, color 0.3s;
+        }
+
+        header {
+            
+            background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+            color: #ffffff;
+            padding: 12px 20px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 3px 6px rgba(0,0,0,0.25);
+            border-bottom: 2px solid rgba(255,255,255,0.1);
+        }
+
+        .header-left {
+            display: flex;
+            align-items: center;
+        }
+
+        .header-left img {
+            height: 40px;
+            margin-right: 12px;
+            border-radius: 50%;
+            border: 2px solid #fff;
+        }
+
+        .header-left span {
+            font-size: 1.8rem;
+            font-weight: 600;
+            letter-spacing: 0.5px;
+        }
+
+        nav {
+            display: flex;
+            gap: 20px;
+            flex-grow: 1;
+            justify-content: center;
+            font-weight: 600;
+        }
+
+        nav a, nav button {
+            color: #fff;
+            text-decoration: none;
+            transition: 0.3s;
+            font-size: 0.95rem;
+        }
+
+        nav a:hover {
+            color: #ff99cc;
+        }
+
+        nav button {
+            padding: 6px 14px;
+            border-radius: 6px;
+            border: none;
+            background: rgba(255,255,255,0.15);
+            cursor: pointer;
+            font-weight: 600;
+        }
+
+        nav button:hover {
+            background: rgba(255,255,255,0.3);
+        }
+
+        .header-right a {
+            color: #fff;
+            font-weight: 600;
+            text-decoration: none;
+            transition: 0.3s;
+        }
+
+        .header-right a:hover {
+            color: #ff4d4f;
+        }
+
+        main {
+            padding: 20px;
+            max-width: 1200px;
+            margin: auto;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.25);
+            backdrop-filter: blur(5px);
+        }
+
+        /* ----- Flash Messages ----- */
+        .flash {
+            padding: 12px 18px;
+            margin-bottom: 15px;
+            border-radius: 8px;
+            font-weight: 500;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+        }
+
+        .flash.success { background-color: #28a745; color: #fff; }
+        .flash.danger { background-color: #dc3545; color: #fff; }
+
+        /* ----- Buttons ----- */
+        .btn-back, nav button, .btn-create, .btn-view, .btn-qr, .btn-export, form button {
+            display: inline-block;
+            padding: 8px 18px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-weight: 600;
+            border: none;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        .btn-back {
+            background: linear-gradient(90deg, #b3124a, #7b2cbf);
+            color: #fff;
+        }
+        .btn-back:hover {
+            background: linear-gradient(90deg, #b3124a, #7b2cbf);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+        }
+
+        .btn-create, .btn-view, .btn-qr, .btn-export, form button {
+            background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+            color: #fff;
+            box-shadow: 0 3px 8px rgba(0,0,0,0.2);
+        }
+        .btn-create:hover, .btn-view:hover, .btn-qr:hover, .btn-export:hover, form button:hover {
+            background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 18px rgba(0,0,0,0.35);
+        }
+
+        /* ----- QR Popup ----- */
+        .qr-popup {
+            display: none;
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: #1e1e1e;
+            padding: 25px;
+            border-radius: 20px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+            z-index: 9999;
+            text-align: center;
+            color: #fff;
+            animation: scaleIn 0.3s forwards;
+        }
+
+        .qr-popup img {
+            max-width: 200px;
+            border-radius: 12px;
+            margin-top: 10px;
+        }
+
+        .close-popup {
+            position: absolute;
+            top: 8px;
+            right: 12px;
+            cursor: pointer;
+            font-weight: bold;
+            color: #ff99cc;
+        }
+
+        @keyframes scaleIn {
+            from { transform: translate(-50%, -50%) scale(0); opacity: 0; }
+            to { transform: translate(-50%, -50%) scale(1); opacity:1; }
+        }
+
+        /* ----- Toast ----- */
+        .toast {
+            visibility: hidden;
+            min-width: 220px;
+            background: linear-gradient(90deg, #b3124a, #7b2cbf);
+            color: #fff;
+            text-align: center;
+            border-radius: 10px;
+            padding: 12px;
+            position: fixed;
+            bottom: 30px;
+            left: 50%;
+            transform: translateX(-50%);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.3);
+            z-index: 1000;
+            opacity: 0;
+            transition: opacity 0.5s, bottom 0.5s;
+        }
+        .toast.show {
+            opacity: 1;
+            bottom: 50px;
+        }
+
+        /* ----- Table Styling ----- */
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+            background: rgba(255,255,255,0.05);
+            color: #fff;
+        }
+
+        table th, table td {
+            padding: 12px 16px;
+            text-align: left;
+        }
+
+        table th {
+            background: linear-gradient(90deg, #b3124a, #7b2cbf);
+            font-weight: 600;
+        }
+
+        table tr:nth-child(even) { background: rgba(255,255,255,0.05); }
+        table tr:hover { background: rgba(255,255,255,0.1); }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    {% if not hide_header %}
+<header>
+    <div class="header-left">
+        <img src="{{ url_for('static', filename='images/company_logo.jpg') }}" alt="Company Logo">
+        <span>VCard Management</span>
+    </div>
+
+    {% if session.get('admin') %}
+    <nav>
+        <a href="{{ url_for('dashboard') }}">Home</a>
+        <a href="{{ url_for('create_user') }}">Create User</a>
+        <button onclick="toggleTheme()">Toggle Theme</button>
+    </nav>
+
+    <div class="header-right">
+        <a href="{{ url_for('logout') }}">Logout</a>
+    </div>
+    {% endif %}
+</header>
+{% endif %}
+
+   {% if not disable_main %}
+<main>
+{% endif %}
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <div class="flash {{ category }}">{{ message }}</div>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+    {% block content %}{% endblock %}
+
+{% if not disable_main %}
+</main>
+{% endif %}
+
+
+    <!-- QR Popup -->
+    <div id="qrPopup" class="qr-popup">
+        <span class="close-popup" onclick="closeQR()">✖</span>
+        <img src="" alt="QR Code">
+    </div>
+
+    <!-- Toast -->
+    <div id="toast" class="toast">Link copied to clipboard!</div>
+</body>
+</html>

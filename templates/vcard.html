@@ -1,0 +1,681 @@
+{% block content %}
+<!-- Add viewport meta tag for proper mobile rendering -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+<div class="vcard-container">
+
+  <!-- Header -->
+  <div class="vcard-header">
+    <h2>{{ user['company_name'] or 'Bavya Health Services is a Private Limited (BHSPL)' }}</h2>
+  </div>
+
+  <!-- Logo -->
+  <div class="vcard-logo">
+    <img src="{{ url_for('static', filename='images/company_logo.jpg') }}" alt="Company Logo">
+  </div>
+
+  <!-- Tagline -->
+  <p class="vcard-tagline">{{ user['tagline'] or 'Making health facilities in emergencies' }}</p>
+
+  <!-- Buttons -->
+  <div class="vcard-top-buttons">
+    {% if user['phone'] %}
+    <a href="tel:{{ user['phone'] }}" class="vcard-btn">
+      <i class="fas fa-phone"></i>
+      <span>Phone<br>(Mobile)</span>
+    </a>
+    {% endif %}
+    {% if user['email'] %}
+    <a href="mailto:{{ user['email'] }}" class="vcard-btn">
+      <i class="fas fa-envelope"></i>
+      <span>Email</span>
+    </a>
+    {% endif %}
+    <a href="https://bhspl.in/index.html" target="_blank" class="vcard-btn">
+      <i class="fas fa-globe"></i>
+      <span>Website</span>
+    </a>
+  </div>
+
+  <!-- Details -->
+  <div class="vcard-details">
+    {% if user['phone'] %}
+    <div class="vcard-item vcard-item-hover">
+      <i class="fas fa-phone"></i>
+      <div>
+        <div class="vcard-label">Phone (Mobile)</div>
+        <div class="vcard-value">+91 {{ user['phone'] }}</div>
+      </div>
+    </div>
+    {% endif %}
+    {% if user['email'] %}
+    <div class="vcard-item vcard-item-hover">
+      <i class="fas fa-envelope"></i>
+      <div>
+        <div class="vcard-label">Email</div>
+        <div class="vcard-value">{{ user['email'] }}</div>
+      </div>
+    </div>
+    {% endif %}
+    <div class="vcard-item vcard-item-hover">
+      <i class="fas fa-globe"></i>
+      <div>
+        <div class="vcard-label">Website</div>
+        <div class="vcard-value">
+          <a href="https://bhspl.in/index.html" target="_blank">https://bhspl.in/index.html</a>
+        </div>
+      </div>
+    </div>
+    {% if user['address'] %}
+    <div class="vcard-item vcard-item-hover">
+      <i class="fas fa-map-marker-alt"></i>
+      <div>
+        <div class="vcard-label">Address</div>
+        <div class="vcard-value">{{ user['address'] }}</div>
+      </div>
+    </div>
+    {% endif %}
+
+    <!-- Save Button -->
+    <div class="vcard-save">
+      <button class="save-btn" onclick="openVCardModal()">
+        <i class="fas fa-user-plus"></i> Save to contacts
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Popup Modal -->
+<div id="vcardModal" class="modal-overlay" onclick="closeModalOutside(event)">
+  <div class="modal-box">
+    <button class="close-btn" onclick="closeVCardModal()">&times;</button>
+    <h3>Save vCard</h3>
+    <p>Save this vCard to your phone or send it to your email.</p>
+
+    <div class="modal-actions">
+      <a href="{{ url_for('download_vcard', user_id=user['id']) }}" class="modal-link" download>
+        <i class="fas fa-download"></i> Save To Phone
+      </a>
+      <a href="mailto:?subject=Contact Card&body=Here's the vCard link: {{ request.url_root }}download_vcard/{{ user['id'] }}" class="modal-link">
+        <i class="fas fa-envelope"></i> Send To Email
+      </a>
+      <a href="mailto:hr@bhspl.in" class="modal-link">
+        <i class="fas fa-paper-plane"></i> Send from your email
+      </a>
+      <a href="#" class="modal-link" onclick="openContactForm()"> 
+        <i class="fas fa-comment-dots"></i> Leave your contact info
+      </a>
+    </div>
+
+    <div class="copy-link-box">
+      <input type="text" id="vcardLink" value="" readonly>
+      <button onclick="copyLink()">Copy</button>
+    </div>
+
+    <!-- Contact Form (hidden initially) -->
+    <div id="contactForm" class="contact-form hidden">
+      <input type="text" placeholder="Your Name">
+      <input type="email" placeholder="Your Email">
+      <button class="submit-btn">Submit</button>
+    </div>
+  </div>
+</div>
+
+<!-- Font Awesome -->
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+
+<style>
+/* === Base Styles === */
+* {
+  box-sizing: border-box;
+  -webkit-box-sizing: border-box;
+  -moz-box-sizing: border-box;
+}
+
+body, html {
+  margin: 0;
+  padding: 0;
+  font-family: "Poppins", "Segoe UI", sans-serif;
+  background: #f5f5f5;
+  overflow-x: hidden;
+  width: 100%;
+  height: 100%;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+.vcard-container {
+  width: 100%;
+  min-height: 100vh;
+  background: #fff;
+  text-align: center;
+  color: #222;
+  position: relative;
+  display: flex;
+  flex-direction: column;
+}
+
+/* === Header === */
+.vcard-header {
+  background: linear-gradient(135deg, #c7156e, #6d28d9);
+  padding: 80px 20px 130px;
+  color: white;
+  border-bottom-left-radius: 45% 20%;
+  border-bottom-right-radius: 45% 20%;
+  box-shadow: 0 4px 25px rgba(0, 0, 0, 0.2);
+}
+.vcard-header h2 {
+  font-size: 2.2rem;
+  margin: 0;
+  font-weight: 700;
+}
+
+/* === Logo === */
+.vcard-logo {
+  margin-top: -100px;
+}
+.vcard-logo img {
+  width: 160px;
+  height: 160px;
+  border-radius: 50%;
+  background: #fff;
+  padding: 12px;
+  box-shadow: 0 8px 25px rgba(0,0,0,0.25);
+}
+
+/* === Tagline === */
+.vcard-tagline {
+  font-size: 1.1rem;
+  margin-top: 15px;
+  color: #444;
+  font-weight: 500;
+}
+
+/* === Buttons === */
+.vcard-top-buttons {
+  display: flex;
+  justify-content: center;
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin-top: 30px;
+  padding: 0 20px;
+}
+.vcard-btn {
+  flex: 1;
+  max-width: 100px;
+  background: linear-gradient(135deg, #b3124a, #7b2cbf);
+  color: white;
+  text-decoration: none;
+  border-radius: 18px;
+  padding: 10px 5px;
+  text-align: center;
+  font-size: 0.85rem;
+  font-weight: 600;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+}
+.vcard-btn:hover {
+  transform: scale(1.05);
+}
+.vcard-btn i {
+  font-size: 1.2rem;
+  display: block;
+  margin-bottom: 3px;
+}
+
+/* === Details === */
+.vcard-details {
+  text-align: left;
+  padding: 40px 40px 70px;
+  background: #fafafa;
+  flex-grow: 1;
+}
+.vcard-item {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px;
+  padding: 10px;
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+.vcard-item-hover:hover {
+  background-color: rgba(199, 21, 110, 0.1);
+  transform: translateX(5px);
+}
+.vcard-item i {
+  font-size: 1.4rem;
+  color: #c7156e;
+  width: 35px;
+  text-align: center;
+}
+.vcard-label {
+  font-size: 0.9rem;
+  color: #777;
+}
+.vcard-value {
+  font-size: 1rem;
+  color: #333;
+  font-weight: 500;
+}
+.vcard-value a {
+  color: #6d28d9;
+  text-decoration: none;
+  transition: color 0.2s ease;
+}
+.vcard-value a:hover {
+  color: #c7156e;
+  text-decoration: underline;
+}
+
+/* === Save Button === */
+.vcard-save {
+  text-align: right;
+  position: fixed;
+  bottom: 25px;
+  right: 25px;
+}
+.save-btn {
+  background: linear-gradient(135deg, #c7156e, #6d28d9);
+  color: #fff;
+  border: none;
+  padding: 14px 26px;
+  border-radius: 40px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+  transition: transform 0.2s ease;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.save-btn i {
+  font-size: 1.1rem;
+}
+.save-btn:hover {
+  transform: scale(1.05);
+}
+
+/* === Modal === */
+.modal-overlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0,0,0,0.6);
+  display: none;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+}
+.modal-box {
+  background: white;
+  width: 90%;
+  max-width: 400px;
+  padding: 25px;
+  border-radius: 12px;
+  box-shadow: 0 6px 20px rgba(0,0,0,0.3);
+  position: relative;
+  text-align: center;
+  animation: fadeIn 0.3s ease;
+}
+.modal-box h3 {
+  margin: 0 0 10px;
+  font-size: 1.3rem;
+  color: #c7156e;
+}
+.modal-box p {
+  color: #555;
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+}
+.close-btn {
+  position: absolute;
+  right: 15px;
+  top: 10px;
+  background: none;
+  border: none;
+  font-size: 1.5rem;
+  cursor: pointer;
+  color: #999;
+}
+.modal-actions {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-bottom: 15px;
+}
+.modal-link {
+  display: block;
+  background: #f3f3f3;
+  padding: 10px;
+  border-radius: 8px;
+  color: #333;
+  text-decoration: none;
+  font-weight: 600;
+  transition: background 0.2s;
+}
+.modal-link:hover {
+  background: #e8e8e8;
+}
+.modal-link i {
+  margin-right: 8px;
+  color: #c7156e;
+}
+
+/* Copy Link */
+.copy-link-box {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: #f8f8f8;
+  padding: 6px;
+  border-radius: 8px;
+}
+.copy-link-box input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 6px;
+  background: transparent;
+  font-size: 0.9rem;
+}
+.copy-link-box button {
+  background: #6d28d9;
+  color: white;
+  border: none;
+  padding: 6px 12px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+/* Contact Form */
+.contact-form {
+  margin-top: 15px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+.contact-form input {
+  padding: 8px;
+  border: 1px solid #ccc;
+  border-radius: 6px;
+  font-size: 0.9rem;
+}
+.submit-btn {
+  background: linear-gradient(135deg, #c7156e, #6d28d9);
+  color: white;
+  border: none;
+  padding: 8px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+.hidden {
+  display: none;
+}
+
+/* Animation */
+@keyframes fadeIn {
+  from { opacity: 0; transform: scale(0.95); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+/* === Mobile Device Detection === */
+/* Mobile First Approach - Default styles for mobile */
+@media screen and (max-width: 1024px) {
+  html {
+    font-size: 16px;
+    -webkit-text-size-adjust: 100%;
+    -ms-text-size-adjust: 100%;
+  }
+  
+  body {
+    width: 100vw;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .vcard-container {
+    width: 100vw;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+  
+  .vcard-header {
+    padding: 60px 20px 110px;
+    border-bottom-left-radius: 60% 25%;
+    border-bottom-right-radius: 60% 25%;
+  }
+  .vcard-header h2 {
+    font-size: 1.8rem;
+    line-height: 2.2rem;
+  }
+  .vcard-logo {
+    margin-top: -90px;
+  }
+  .vcard-logo img {
+    width: 140px;
+    height: 140px;
+  }
+  .vcard-tagline {
+    font-size: 1.2rem;
+    margin: 15px 0;
+    padding: 0 20px;
+  }
+  .vcard-top-buttons {
+    flex-direction: row;
+    justify-content: center;
+    gap: 8px;
+    margin-top: 25px;
+    padding: 0 15px;
+    flex-wrap: nowrap;
+  }
+  .vcard-btn {
+    max-width: 90px;
+    font-size: 0.75rem;
+    padding: 8px 4px;
+    border-radius: 12px;
+  }
+  .vcard-btn i {
+    font-size: 1.1rem;
+  }
+  .vcard-details {
+    padding: 30px 25px 100px;
+  }
+  .vcard-item {
+    margin-bottom: 20px;
+    padding: 15px;
+  }
+  .vcard-item-hover:hover {
+    background-color: rgba(199, 21, 110, 0.15);
+  }
+  .vcard-item i {
+    font-size: 1.6rem;
+    width: 40px;
+  }
+  .vcard-label {
+    font-size: 1.1rem;
+  }
+  .vcard-value {
+    font-size: 1.2rem;
+  }
+  .save-btn {
+    font-size: 1.1rem;
+    padding: 15px 25px;
+    border-radius: 35px;
+  }
+  
+  /* Modal adjustments for mobile */
+  .modal-box {
+    width: 95%;
+    max-width: 350px;
+    padding: 30px;
+  }
+  .modal-box h3 {
+    font-size: 1.5rem;
+  }
+  .modal-box p {
+    font-size: 1.1rem;
+  }
+  .modal-link {
+    padding: 15px;
+    font-size: 1.1rem;
+  }
+  .copy-link-box input {
+    font-size: 1rem;
+    padding: 10px;
+  }
+  .copy-link-box button {
+    padding: 10px 15px;
+    font-size: 1rem;
+  }
+  .contact-form input {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  .submit-btn {
+    padding: 12px;
+    font-size: 1rem;
+  }
+}
+
+/* For very small screens */
+@media screen and (max-width: 480px) {
+  .vcard-header h2 {
+    font-size: 1.6rem;
+    line-height: 2rem;
+  }
+  .vcard-logo img {
+    width: 120px;
+    height: 120px;
+  }
+  .vcard-tagline {
+    font-size: 1.1rem;
+  }
+  .vcard-top-buttons {
+    gap: 5px;
+    padding: 0 10px;
+  }
+  .vcard-btn {
+    max-width: 80px;
+    font-size: 0.7rem;
+    padding: 6px 3px;
+  }
+  .vcard-btn i {
+    font-size: 1rem;
+  }
+  .vcard-details {
+    padding: 25px 20px 90px;
+  }
+  .vcard-item {
+    padding: 12px;
+  }
+  .vcard-item i {
+    font-size: 1.5rem;
+    width: 35px;
+  }
+  .vcard-label {
+    font-size: 1rem;
+  }
+  .vcard-value {
+    font-size: 1.1rem;
+  }
+  .save-btn {
+    font-size: 1rem;
+    padding: 12px 20px;
+  }
+}
+
+/* Desktop overrides */
+@media screen and (min-width: 1025px) {
+  .vcard-header h2 {
+    font-size: 2.2rem;
+  }
+  .vcard-logo img {
+    width: 160px;
+    height: 160px;
+  }
+  .vcard-tagline {
+    font-size: 1.1rem;
+  }
+  .vcard-btn {
+    font-size: 0.95rem;
+  }
+  .vcard-btn i {
+    font-size: 1.5rem;
+  }
+  .vcard-item i {
+    font-size: 1.4rem;
+  }
+  .vcard-label {
+    font-size: 0.9rem;
+  }
+  .vcard-value {
+    font-size: 1rem;
+  }
+  .save-btn {
+    font-size: 1rem;
+  }
+}
+.dashboard-footer {
+    text-align: center;
+    padding: 15px 0;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    font-weight: 600;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    border-radius: 0 0 16px 16px;
+    position: flex;       /* stick to bottom */
+    bottom: 0;             /* at the bottom of viewport */
+    left: 0;
+    width: 100%;           /* full width */
+    z-index: 100;          /* above other content */
+}
+</style>
+
+<script>
+// Force mobile viewport settings
+(function() {
+  if (navigator.userAgent.match(/(iPhone|iPod|iPad|Android|BlackBerry|IEMobile|Opera Mini)/)) {
+    const viewport = document.querySelector('meta[name="viewport"]');
+    if (viewport) {
+      viewport.setAttribute('content', 'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+  }
+})();
+
+// Set the current URL in the vcardLink input field
+document.addEventListener('DOMContentLoaded', function() {
+  const vcardLink = document.getElementById('vcardLink');
+  if (vcardLink) {
+    vcardLink.value = window.location.href;
+  }
+});
+
+function openVCardModal() {
+  document.getElementById('vcardModal').style.display = 'flex';
+}
+
+function closeVCardModal() {
+  document.getElementById('vcardModal').style.display = 'none';
+}
+
+function closeModalOutside(e) {
+  if (e.target.classList.contains('modal-overlay')) {
+    closeVCardModal();
+  }
+}
+
+function copyLink() {
+  const linkInput = document.getElementById('vcardLink');
+  linkInput.select();
+  document.execCommand('copy');
+  alert('Link copied!');
+}
+
+function openContactForm() {
+  document.getElementById('contactForm').classList.toggle('hidden');
+}
+</script>
+ <footer class="dashboard-footer">
+    Powered by <b>BHSPL</b>
+</footer>
+{% endblock %}

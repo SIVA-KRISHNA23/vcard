@@ -1,0 +1,211 @@
+{% set hide_header = True %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="login-wrapper">
+  <!-- Left Side: Logo & Title -->
+  <div class="login-left">
+    <img src="{{ url_for('static', filename='images/company_logo.jpg') }}" alt="Company Logo" class="login-logo">
+    <h1 class="login-title">Welcome to VCard Management</h1>
+    <p class="login-subtitle">Admin Portal</p>
+  </div>
+
+  <!-- Right Side: Login Form -->
+  <div class="login-right">
+    {% with messages = get_flashed_messages(with_categories=true) %}
+  {% if messages %}
+    {% set seen_messages = [] %}
+    {% for category, message in messages %}
+      {% if message not in seen_messages %}
+        <div class="flash {{ category }}">{{ message }}</div>
+        {% set _ = seen_messages.append(message) %}
+      {% endif %}
+    {% endfor %}
+  {% endif %}
+{% endwith %}
+
+    <form method="POST" action="{{ url_for('login') }}" class="login-form">
+      <label for="username">Username</label>
+      <input type="text" id="username" name="username" placeholder="Enter username" required>
+
+      <label for="password">Password</label>
+      <input type="password" id="password" name="password" placeholder="Enter password" required>
+
+      <button type="submit">Login</button>
+    </form>
+  </div>
+</div>
+
+<style>
+/* 🌟 Corporate Gradient Background */
+body {
+  margin: 0;
+  font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
+  background:  #fff;
+ 
+  height: 100vh;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+/* 🌈 Two Columns Layout */
+.login-wrapper {
+  display: flex;
+  width: 140%;
+  max-width: 900px;
+  border-radius: 16px;
+  overflow: hidden;
+
+  box-shadow: 0 10px 40px rgba(0,0,0,0.25);
+  margin: 0 auto; 
+}
+
+/* Left Side */
+.login-left {
+  flex: 1;
+  background: linear-gradient(135deg, #b3124a, #7b2cbf);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 30px;
+  text-align: center;
+}
+
+.login-left .login-logo {
+  width: 120px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  margin-bottom: 20px;
+}
+
+.login-left .login-title {
+  font-size: 2rem;
+  font-weight: 700;
+  margin-bottom: 10px;
+  color: #fff;
+  
+}
+
+.login-left .login-subtitle {
+  font-size: 1.1rem;
+  font-weight: 500;
+   color: #fff;
+}
+
+/* Right Side */
+.login-right {
+  flex: 1;
+  background: #fff;
+  color: #333;
+  padding: 50px 40px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+}
+.flash {
+  padding: 12px 15px;
+  margin-bottom: 20px;
+  border-radius: 8px;
+  font-weight: 600;
+  font-size: 0.95rem;
+  opacity: 0;
+  transform: translateY(-10px);
+  transition: all 0.5s ease;
+  background: linear-gradient(135deg, #b3124a, #7b2cbf);
+  color: white;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+}
+
+.flash.show {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+.flash.hide {
+  opacity: 0;
+  transform: translateY(-10px);
+}
+
+/* Form */
+.login-form label {
+  display: block;
+  margin: 12px 0 6px;
+  font-weight: 600;
+}
+
+.login-form input {
+  width: 100%;
+  padding: 12px 14px;
+  margin-bottom: 18px;
+  border-radius: 8px;
+  border: 1px solid #ccc;
+  font-size: 1rem;
+  background: #fff;
+  color: #333;
+  transition: all 0.3s ease;
+}
+
+.login-form input::placeholder {
+  color: #888;
+}
+
+.login-form input:focus {
+  border-color: hsl(330, 70%, 50%);
+  box-shadow: 0 0 6px rgba(139,0,0,0.3);
+  outline: none;
+}
+
+.login-form button {
+  width: 100%;
+  padding: 12px;
+  background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+  color: #fff;
+  font-weight: 700;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 1.05rem;
+  transition: all 0.3s ease;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.25);
+}
+
+.login-form button:hover {
+  background: linear-gradient(90deg, #b3124a, #7b2cbf);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.3);
+  transform: translateY(-2px);
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .login-wrapper {
+    flex-direction: column;
+     margin: 0 auto;
+  }
+
+  .login-left, .login-right {
+    flex: none;
+    width: 100%;
+  }
+
+  .login-right {
+    padding: 40px 30px;
+  }
+}
+</style>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    const flashes = document.querySelectorAll('.flash');
+    flashes.forEach(flash => {
+        flash.classList.add('show'); 
+        setTimeout(() => {
+            flash.classList.add('hide'); 
+        }, 2000);
+        setTimeout(() => {
+            flash.style.display = 'none'; 
+        }, 3000);
+    });
+});
+</script>
+
+{% endblock %}

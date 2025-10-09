@@ -1,0 +1,290 @@
+{% set disable_main = True %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="form-container">
+    <a href="{{ url_for('dashboard') }}" class="btn-back">← Back to Dashboard</a>
+
+    {% if message %}
+    <div class="success-message" style="display:none;">{{ message }}</div>
+    {% endif %}
+
+    <form method="POST" enctype="multipart/form-data" class="user-form" id="createUserForm" onsubmit="return validateForm()">
+        <h2>Create New User</h2>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="name">Full Name</label>
+                <input type="text" id="name" name="name" placeholder="John Doe" required>
+            </div>
+            <div class="form-col">
+                <label for="dob">Date of Birth</label>
+                <input type="date" id="dob" name="dob" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="email">Email</label>
+                <input type="email" id="email" name="email" placeholder="example@domain.com" required>
+            </div>
+            <div class="form-col">
+                <label for="phone">Phone</label>
+                <input type="text" id="phone" name="phone" placeholder="+91-XXXXXXXXXX" required pattern="^[0-9]{10}$" title="Enter a valid 10-digit phone number" maxlength="10">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col full-width">
+                <label for="address">Address</label>
+                <textarea id="address" name="address" placeholder="Full Address" required></textarea>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="role">Role</label>
+                <select id="role" name="role" required>
+                    <option value="" disabled selected>Select Role</option>
+                    <option value="Admin">Admin</option>
+                    <option value="Manager">Manager</option>
+                    <option value="Employee">Employee</option>
+                    <option value="Technician">Technician</option>
+                </select>
+            </div>
+            <div class="form-col">
+                <label for="department">Department</label>
+                <input type="text" id="department" name="department" placeholder="e.g. IT, HR, Finance">
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="join_date">Joining Date</label>
+                <input type="date" id="join_date" name="join_date">
+            </div>
+            <div class="form-col">
+                <label for="username">Username</label>
+                <input type="text" id="username" name="username" placeholder="Unique Username" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="password">Password</label>
+                <input type="password" id="password" name="password" placeholder="Enter Password" required>
+            </div>
+            <div class="form-col">
+                <label for="confirm_password">Confirm Password</label>
+                <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter Password" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col full-width">
+                <label for="photo">Photo</label>
+                <input type="file" id="photo" name="photo">
+            </div>
+        </div>
+
+        <button type="submit">Create User</button>
+    </form>
+</div>
+
+{% if message %}
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener("DOMContentLoaded", () => {
+    Swal.fire({
+        icon: 'success',
+        title: 'User Created Successfully!',
+        text: '{{ message }}',
+        confirmButtonColor: '#8B0000',
+        background: '#fefefe',
+        color: '#333',
+        timer: 2000,
+        showConfirmButton: false
+    });
+});
+</script>
+{% endif %}
+
+ <footer class="dashboard-footer">
+    Powered by <b>BHSPL</b>
+</footer>
+<script>
+function validateForm() {
+    const name = document.getElementById("name").value.trim();
+    const email = document.getElementById("email").value.trim();
+    const phone = document.getElementById("phone").value.trim();
+    const password = document.getElementById("password").value.trim();
+    const confirmPassword = document.getElementById("confirm_password").value.trim();
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    const phoneRegex = /^[0-9]{10}$/;
+
+    if (name.length < 3) {
+        alert("Full Name must be at least 3 characters long.");
+        return false;
+    }
+
+    if (!emailRegex.test(email)) {
+        alert("Please enter a valid email address.");
+        return false;
+    }
+
+    if (!phoneRegex.test(phone)) {
+        alert("Please enter a valid 10-digit phone number.");
+        return false;
+    }
+
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters long.");
+        return false;
+    }
+
+    if (password !== confirmPassword) {
+        alert("Passwords do not match.");
+        return false;
+    }
+
+    return true;
+}
+
+// 🔹 Restrict phone input to digits only and max 10
+document.getElementById("phone").addEventListener("input", function() {
+    this.value = this.value.replace(/[^0-9]/g, '').slice(0, 10);
+});
+</script>
+
+<style>
+.form-container {
+    max-width: 650px;
+    margin: 30px auto;
+    background: linear-gradient(135deg, hsl(345, 80%, 95%), hsl(330, 70%, 95%));
+    padding: 35px 30px;
+    border-radius: 16px;
+    box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+}
+
+.btn-back {
+    display: inline-block;
+    margin-bottom: 20px;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-back:hover {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+.user-form h2 {
+    margin-bottom: 25px;
+    text-align: center;
+    font-size: 2rem;
+    font-weight: 700;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    background-clip: text;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+.user-form label {
+    display: block;
+    margin: 12px 0 6px;
+    font-weight: 600;
+    color: #333;
+}
+
+.user-form input[type="text"],
+.user-form input[type="email"],
+.user-form input[type="date"],
+.user-form input[type="password"],
+.user-form textarea,
+.user-form select,
+.user-form input[type="file"] {
+    width: 100%;
+    padding: 12px 14px;
+    border-radius: 10px;
+    border: 1px solid #ccc;
+    font-size: 1rem;
+    transition: 0.3s;
+    box-shadow: inset 0 2px 4px rgba(0,0,0,0.05);
+}
+
+.user-form input:focus,
+.user-form textarea:focus,
+.user-form select:focus {
+    border-color: hsl(345, 80%, 40%);
+    outline: none;
+    box-shadow: 0 0 8px rgba(139,0,0,0.3);
+}
+
+textarea {
+    resize: vertical;
+    min-height: 70px;
+}
+
+.form-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 15px;
+}
+
+.form-col {
+    flex: 1;
+    min-width: 250px;
+}
+
+.form-col.full-width {
+    flex: 1 1 100%;
+}
+
+.user-form button {
+    width: 100%;
+    padding: 14px;
+    margin-top: 15px;
+    border-radius: 10px;
+    border: none;
+    font-weight: 600;
+    font-size: 1.1rem;
+    color: #fff;
+    cursor: pointer;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    transition: 0.4s;
+}
+
+.user-form button:hover {
+    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+}
+
+.success-message {
+    padding: 12px;
+    margin-bottom: 20px;
+    border-radius: 8px;
+    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+    color: #fff;
+    text-align: center;
+    font-weight: 600;
+}
+.dashboard-footer {
+    text-align: center;
+    padding: 15px 0;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    font-weight: 600;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    border-radius: 0 0 16px 16px;
+    position: fixed;       /* stick to bottom */
+    bottom: 0;             /* at the bottom of viewport */
+    left: 0;
+    width: 100%;           /* full width */
+    z-index: 100;          /* above other content */
+}
+</style>
+{% endblock %}
