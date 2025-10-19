@@ -13,39 +13,57 @@ from email.message import EmailMessage
 app = Flask(__name__)
 app.config.from_object(Config)
 
+# Make sure to set the secret key
+app.secret_key = os.environ.get('SECRET_KEY', 'your-secret-key-here')
+
 # ----------------- Database Initialization -----------------
 def init_db():
-    conn = sqlite3.connect('vcard.db')
-    cursor = conn.cursor()
-    
-    cursor.execute('''
-    CREATE TABLE IF NOT EXISTS users (
-        id INTEGER PRIMARY KEY AUTOINCREMENT,
-        name TEXT NOT NULL,
-        dob TEXT NOT NULL,
-        email TEXT NOT NULL UNIQUE,
-        phone TEXT NOT NULL,
-        address TEXT NOT NULL,
-        photo TEXT
-    )
-    ''')
-    
-    cursor.execute("PRAGMA table_info(users)")
-    columns = [col[1] for col in cursor.fetchall()]
+    # Create database if it doesn't exist
+    if not os.path.exists('vcard.db'):
+        conn = sqlite3.connect('vcard.db')
+        cursor = conn.cursor()
+        
+        cursor.execute('''
+        CREATE TABLE IF NOT EXISTS users (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT NOT NULL,
+            dob TEXT NOT NULL,
+            email TEXT NOT NULL UNIQUE,
+            phone TEXT NOT NULL,
+            address TEXT NOT NULL,
+            photo TEXT,
+            designation TEXT,
+            company TEXT,
+            gender TEXT,
+            qrcode TEXT
+        )
+        ''')
+        
+        conn.commit()
+        conn.close()
+        print("Database initialized")
+    else:
+        # Check if new columns exist and add them if needed
+        conn = sqlite3.connect('vcard.db')
+        cursor = conn.cursor()
+        
+        cursor.execute("PRAGMA table_info(users)")
+        columns = [col[1] for col in cursor.fetchall()]
 
-    new_fields = {
-        "designation": "TEXT",
-        "company": "TEXT",
-        "gender": "TEXT",
-        "qrcode": "TEXT"
-    }
-    for field, datatype in new_fields.items():
-        if field not in columns:
-            cursor.execute(f"ALTER TABLE users ADD COLUMN {field} {datatype}")
-    
-    conn.commit()
-    conn.close()
+        new_fields = {
+            "designation": "TEXT",
+            "company": "TEXT",
+            "gender": "TEXT",
+            "qrcode": "TEXT"
+        }
+        for field, datatype in new_fields.items():
+            if field not in columns:
+                cursor.execute(f"ALTER TABLE users ADD COLUMN {field} {datatype}")
+        
+        conn.commit()
+        conn.close()
 
+# Initialize database on startup
 init_db()
 
 # Ensure folders exist
@@ -74,15 +92,13 @@ def login():
         else:
             flash('Invalid credentials', 'danger')  
 
-    return render_template('login.html', logo='static/logo.png')
-
+    return render_template('login.html')
 
 @app.route('/logout')
 def logout():
     session.pop('admin', None)
     flash('You have been logged out successfully!', 'success') 
     return redirect(url_for('login'))
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -91,7 +107,7 @@ def dashboard():
     conn = get_db()
     users = conn.execute("SELECT * FROM users").fetchall()
     conn.close()
-    return render_template('dashboard.html', users=users, logo='static/logo.png')
+    return render_template('dashboard.html', users=users)
 
 @app.route('/create_user', methods=['GET', 'POST'])
 def create_user():
@@ -126,8 +142,8 @@ def create_user():
         user_id = cur.lastrowid
         conn.commit()
 
-        # vCard URL (local link)
-        vcard_url = url_for('vcard', user_id=user_id, _external=True)
+        # vCard URL (using the actual domain)
+        vcard_url = request.host_url + url_for('vcard', user_id=user_id)[1:]  # Remove leading slash
 
         # Generate QR code
         qr_img = qrcode.QRCode(
@@ -147,16 +163,17 @@ def create_user():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('dashboard',message="User created successfully!"))
+        flash("User created successfully!", "success")
+        return redirect(url_for('dashboard'))
 
-    return render_template('create_user.html', logo='static/logo.png')
+    return render_template('create_user.html')
 
 @app.route('/vcard/<int:user_id>')
 def vcard(user_id):
     conn = get_db()
     user = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
     conn.close()
-    return render_template('vcard.html', user=user, logo='static/logo.png')
+    return render_template('vcard.html', user=user)
 
 @app.route('/download_vcard/<int:user_id>')
 def download_vcard(user_id):
@@ -279,9 +296,14 @@ END:VCARD
 
         return redirect(url_for('dashboard'))
 
-    return render_template('share_vcard.html', user=user, logo='static/logo.png')
+    return render_template('share_vcard.html', user=user)
+
+# Health check endpoint for Railway
+@app.route('/health')
+def health():
+    return {"status": "healthy"}
 
 # ----------------- End -----------------
 if __name__ == '__main__':
-    app.secret_key = app.config['SECRET_KEY']
-    app.run(host='0.0.0.0', port=5000, debug=False)
+    port = int(os.environ.get('PORT', 5000))
+    app.run(host='0.0.0.0', port=port, debug=False)
