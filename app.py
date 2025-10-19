@@ -80,6 +80,10 @@ def get_db():
 def home():
     return redirect(url_for('login'))
 
+@app.route('/health')
+def health():
+    return {"status": "healthy"}
+
 @app.route('/login', methods=['GET', 'POST'])
 def login():
     if request.method == 'POST':
