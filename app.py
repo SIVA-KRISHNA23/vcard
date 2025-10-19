@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import qrcode
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response, jsonify
 from werkzeug.utils import secure_filename
 from config import Config
 import csv
@@ -79,10 +79,6 @@ def get_db():
 @app.route('/')
 def home():
     return redirect(url_for('login'))
-
-@app.route('/health')
-def health():
-    return {"status": "healthy"}
 
 @app.route('/login', methods=['GET', 'POST'])
 def login():
@@ -302,12 +298,12 @@ END:VCARD
 
     return render_template('share_vcard.html', user=user)
 
-# Health check endpoint for Railway
+# Health check endpoint for Railway (ONLY ONE!)
 @app.route('/health')
 def health():
     return {"status": "healthy"}
 
 # ----------------- End -----------------
 if __name__ == '__main__':
-    port = int(os.environ.get('PORT', 5000))
+    port = int(os.environ.get('PORT', 8080))
     app.run(host='0.0.0.0', port=port, debug=False)
