@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import qrcode
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response, jsonify  # <-- Added jsonify
 from werkzeug.utils import secure_filename
 from config import Config
 import csv
@@ -280,6 +280,12 @@ END:VCARD
         return redirect(url_for('dashboard'))
 
     return render_template('share_vcard.html', user=user, logo='static/logo.png')
+
+# ----------------- Health Check -----------------
+@app.route('/health')
+def health():
+    """Health check endpoint for Railway."""
+    return jsonify({"status": "healthy"}), 200
 
 # ----------------- End -----------------
 if __name__ == '__main__':
