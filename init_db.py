@@ -12,10 +12,12 @@ CREATE TABLE IF NOT EXISTS users (
     phone TEXT NOT NULL,
     address TEXT NOT NULL,
     photo TEXT,
+    designation TEXT,
+    company TEXT,
+    gender TEXT,
     qrcode TEXT
 )
 ''')
 
 conn.commit()
 conn.close()
-
