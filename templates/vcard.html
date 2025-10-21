@@ -57,6 +57,15 @@
       </div>
     </div>
     {% endif %}
+    {% if user['designation'] %}
+    <div class="vcard-item vcard-item-hover">
+      <i class="fas fa-briefcase"></i>
+      <div>
+        <div class="vcard-label">Designation</div>
+        <div class="vcard-value">{{ user['designation'] }}</div>
+      </div>
+    </div>
+    {% endif %}
     <div class="vcard-item vcard-item-hover">
       <i class="fas fa-globe"></i>
       <div>
