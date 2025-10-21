@@ -35,7 +35,7 @@
             </div>
             <div class="card-buttons">
                 <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-view">View Card</a>
-                <a href="{{ url_for('download_vcard', user_id=user['id']) }}" class="btn-qr">Download QR</a>
+                <a href="{{ url_for('download_qr', user_id=user['id']) }}" class="btn-qr">Download QR</a>
                 <button class="btn-delete" data-user-id="{{ user['id'] }}" data-user-name="{{ user['name'] | e }}">Delete</button>
             </div>
         </div>
