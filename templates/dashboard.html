@@ -19,32 +19,87 @@
     <div class="users-grid" id="usersGrid">
         {% for user in users %}
         <div class="user-card">
-            {% if user['photo'] %}
-            <img src="{{ url_for('static', filename='uploads/' ~ user['photo']) }}" alt="Photo" class="user-photo">
-            {% else %}
-            <img src="{{ url_for('static', filename='uploads/default.png') }}" alt="Photo" class="user-photo">
-            {% endif %}
-            <h3>{{ user['name'] }}</h3>
-            <p><b>Email:</b> {{ user['email'] }}</p>
-            <p><b>Phone:</b> {{ user['phone'] }}</p>
-            {% if user['qrcode'] %}
-            <img src="{{ url_for('static', filename='qrcodes/' ~ user['qrcode']) }}" alt="QR" class="qr-code">
-            {% endif %}
+            <div class="user-header">
+                <h3>{{ user['name'] }}</h3>
+            </div>
+            <div class="user-photo-container">
+                {% if user['photo'] %}
+                <img src="{{ url_for('static', filename='uploads/' ~ user['photo']) }}" alt="Photo" class="user-photo">
+                {% else %}
+                <img src="{{ url_for('static', filename='uploads/default.png') }}" alt="Photo" class="user-photo">
+                {% endif %}
+            </div>
+            <div class="user-info">
+                <p><i class="fas fa-envelope"></i> {{ user['email'] }}</p>
+                <p><i class="fas fa-phone"></i> {{ user['phone'] }}</p>
+            </div>
             <div class="card-buttons">
-                <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-view">View VCard</a>
+                <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-view">View Card</a>
                 <a href="{{ url_for('download_vcard', user_id=user['id']) }}" class="btn-qr">Download QR</a>
-                
+                <button class="btn-delete" data-user-id="{{ user['id'] }}" data-user-name="{{ user['name'] | e }}">Delete</button>
             </div>
         </div>
-        <footer class="dashboard-footer">
-    Powered by <b>BHSPL</b>
-</footer>
         {% endfor %}
     </div>
 </div>
 
+<footer class="dashboard-footer">
+    Powered by <b>BHSPL</b>
+</footer>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listeners to all delete buttons
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete ${userName}. This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#7b2cbf',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/delete_user/${userId}`;
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+
+function filterUsers() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.user-card');
+    cards.forEach(card => {
+        const name = card.querySelector('h3').innerText.toLowerCase();
+        const email = card.querySelector('.user-info p').innerText.toLowerCase();
+        if(name.includes(input) || email.includes(input)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+
 <style>
-/* 🌈 Dashboard Background */
+/* 🌈 Dashboard Background - Original Style */
 body {
     background: linear-gradient(120deg, #b3124a, #7b2cbf);
     font-family: "Segoe UI", Tahoma, Geneva, Verdana, sans-serif;
@@ -55,7 +110,7 @@ body {
 .dashboard-wrapper {
     max-width: 1200px;
     margin: 30px auto;
-    padding: 0 20px;
+    padding: 0 20px 80px; /* Added bottom padding for fixed footer */
 }
 
 /* Header */
@@ -69,7 +124,9 @@ body {
     font-size: 2rem;
     font-weight: 700;
     color: #fff;
+    text-shadow: 0 2px 4px rgba(0,0,0,0.3);
 }
+
 /* Sticky Footer */
 .dashboard-footer {
     text-align: center;
@@ -79,13 +136,12 @@ body {
     font-weight: 600;
     border-top: 1px solid rgba(255,255,255,0.3);
     border-radius: 0 0 16px 16px;
-    position: fixed;       /* stick to bottom */
-    bottom: 0;             /* at the bottom of viewport */
+    position: fixed;
+    bottom: 0;
     left: 0;
-    width: 100%;           /* full width */
-    z-index: 100;          /* above other content */
+    width: 100%;
+    z-index: 100;
 }
-
 
 /* Controls */
 .dashboard-controls {
@@ -106,11 +162,12 @@ body {
     background: #fff;
     color: #333;
     transition: 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
 }
 
 .dashboard-controls input[type="text"]:focus {
     outline: none;
-    box-shadow: 0 0 6px rgba(139,0,0,0.4);
+    box-shadow: 0 0 8px rgba(139,0,0,0.4);
 }
 
 /* Buttons */
@@ -122,47 +179,51 @@ body {
     text-decoration: none;
     font-weight: 600;
     transition: all 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
 }
 
 .btn-create:hover {
     background: linear-gradient(135deg, #b3124a, #7b2cbf);
     box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
 }
 
 /* CSV Export Button */
 .btn-csv {
-    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    background: linear-gradient(135deg, #28a745, #20c997);
 }
 
 .btn-csv:hover {
-    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    background: linear-gradient(135deg, #20c997, #28a745);
 }
 
 /* ZIP Download Button */
 .btn-zip {
-    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    background: linear-gradient(135deg, #6f42c1, #5a32a3);
 }
 
 .btn-zip:hover {
-    background: linear-gradient(135deg,  #b3124a, #7b2cbf);
+    background: linear-gradient(135deg, #5a32a3, #452288);
 }
 
 /* Users Grid */
 .users-grid {
     display: grid;
-    grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
     gap: 20px;
 }
 
 /* User Card */
 .user-card {
-    background: rgba(255,255,255,0.1);
+    background: rgba(255,255,255,0.95);
     border-radius: 16px;
-    padding: 25px 20px;
+    padding: 20px;
     text-align: center;
     box-shadow: 0 8px 22px rgba(0,0,0,0.25);
     transition: transform 0.3s, box-shadow 0.3s;
-    color: #fff;
+    color: #333;
+    display: flex;
+    flex-direction: column;
 }
 
 .user-card:hover {
@@ -170,39 +231,85 @@ body {
     box-shadow: 0 14px 28px rgba(0,0,0,0.4);
 }
 
-/* Images */
+/* User Header */
+.user-header {
+    margin-bottom: 15px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(0,0,0,0.1);
+}
+
+.user-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #b3124a;
+    text-transform: capitalize;
+}
+
+/* User Photo */
+.user-photo-container {
+    margin-bottom: 15px;
+    display: flex;
+    justify-content: center;
+}
+
 .user-photo {
     width: 100px;
     height: 100px;
-    border-radius: 50%;
     object-fit: cover;
-    margin-bottom: 12px;
-    border: 2px solid #fff;
+    border: 3px solid #b3124a;
+    box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+    transition: all 0.3s ease;
 }
 
-.qr-code {
-    margin: -30px 0;
-    width: 80px;
-    height: 80px;
+.user-photo:hover {
+    transform: scale(1.05);
+}
+
+/* User Info */
+.user-info {
+    margin-bottom: 20px;
+    flex-grow: 1;
+}
+
+.user-info p {
+    margin: 8px 0;
+    font-size: 0.9rem;
+    color: #555;
+    display: flex;
+    align-items: center;
+    justify-content: flex-start;
+    gap: 10px;
+    text-align: left;
+}
+
+.user-info i {
+    color: #b3124a;
+    width: 20px;
+    text-align: center;
 }
 
 /* Card Buttons */
 .card-buttons {
     display: flex;
-    justify-content: center;
-    gap: 12px;
-    margin-top: -5px;
-    flex-wrap: nowrap;
+    justify-content: space-between;
+    gap: 8px;
+    margin-top: auto;
 }
 
-.btn-view, .btn-qr {
-    padding: 8px 14px;
+.btn-view, .btn-qr, .btn-delete {
+    padding: 8px 12px;
     border-radius: 8px;
     text-decoration: none;
     font-weight: 600;
     color: #fff;
-    flex: 0 0 auto;
-    transition: 0.3s;
+    transition: all 0.3s ease;
+    font-size: 0.9rem;
+    flex: 1;
+    text-align: center;
+    border: none;
+    cursor: pointer;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
 }
 
 .btn-view {
@@ -210,15 +317,29 @@ body {
 }
 
 .btn-view:hover {
-    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    background: linear-gradient(90deg, #a01040, #6a1fa0);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 .btn-qr {
-    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+    background: linear-gradient(90deg, #28a745, #20c997);
 }
 
 .btn-qr:hover {
-    background: linear-gradient(90deg,  #b3124a, #7b2cbf);
+    background: linear-gradient(90deg, #218838, #1e7e34);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
+}
+
+.btn-delete {
+    background: linear-gradient(90deg, #dc3545, #c82333);
+}
+
+.btn-delete:hover {
+    background: linear-gradient(90deg, #c82333, #bd2130);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 8px rgba(0,0,0,0.3);
 }
 
 /* Responsive */
@@ -231,22 +352,14 @@ body {
         flex-direction: column;
         gap: 10px;
     }
+    
+    .card-buttons {
+        flex-direction: column;
+    }
+    
+    .user-info p {
+        justify-content: center;
+    }
 }
 </style>
-
-<script>
-function filterUsers() {
-    const input = document.getElementById('searchInput').value.toLowerCase();
-    const cards = document.querySelectorAll('.user-card');
-    cards.forEach(card => {
-        const name = card.querySelector('h3').innerText.toLowerCase();
-        const email = card.querySelector('p').innerText.toLowerCase();
-        if(name.includes(input) || email.includes(input)) {
-            card.style.display = '';
-        } else {
-            card.style.display = 'none';
-        }
-    });
-}
-</script>
 {% endblock %}
