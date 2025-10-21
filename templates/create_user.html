@@ -42,45 +42,36 @@
 
         <div class="form-row">
             <div class="form-col">
-                <label for="role">Role</label>
-                <select id="role" name="role" required>
-                    <option value="" disabled selected>Select Role</option>
+                <label for="designation">Designation</label>
+                <select id="designation" name="designation" required>
+                    <option value="" disabled selected>Select Designation</option>
                     <option value="Admin">Admin</option>
                     <option value="Manager">Manager</option>
                     <option value="Employee">Employee</option>
                     <option value="Technician">Technician</option>
+                    <option value="Developer">Developer</option>
+                    <option value="Designer">Designer</option>
+                    <option value="Sales">Sales</option>
+                    <option value="Support">Support</option>
                 </select>
             </div>
             <div class="form-col">
-                <label for="department">Department</label>
-                <input type="text" id="department" name="department" placeholder="e.g. IT, HR, Finance">
+                <label for="company">Company</label>
+                <input type="text" id="company" name="company" placeholder="Company Name">
             </div>
         </div>
 
         <div class="form-row">
             <div class="form-col">
-                <label for="join_date">Joining Date</label>
-                <input type="date" id="join_date" name="join_date">
+                <label for="gender">Gender</label>
+                <select id="gender" name="gender">
+                    <option value="" disabled selected>Select Gender</option>
+                    <option value="Male">Male</option>
+                    <option value="Female">Female</option>
+                    <option value="Other">Other</option>
+                </select>
             </div>
             <div class="form-col">
-                <label for="username">Username</label>
-                <input type="text" id="username" name="username" placeholder="Unique Username" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-col">
-                <label for="password">Password</label>
-                <input type="password" id="password" name="password" placeholder="Enter Password" required>
-            </div>
-            <div class="form-col">
-                <label for="confirm_password">Confirm Password</label>
-                <input type="password" id="confirm_password" name="confirm_password" placeholder="Re-enter Password" required>
-            </div>
-        </div>
-
-        <div class="form-row">
-            <div class="form-col full-width">
                 <label for="photo">Photo</label>
                 <input type="file" id="photo" name="photo">
             </div>
@@ -116,8 +107,6 @@ function validateForm() {
     const name = document.getElementById("name").value.trim();
     const email = document.getElementById("email").value.trim();
     const phone = document.getElementById("phone").value.trim();
-    const password = document.getElementById("password").value.trim();
-    const confirmPassword = document.getElementById("confirm_password").value.trim();
 
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     const phoneRegex = /^[0-9]{10}$/;
@@ -134,16 +123,6 @@ function validateForm() {
 
     if (!phoneRegex.test(phone)) {
         alert("Please enter a valid 10-digit phone number.");
-        return false;
-    }
-
-    if (password.length < 6) {
-        alert("Password must be at least 6 characters long.");
-        return false;
-    }
-
-    if (password !== confirmPassword) {
-        alert("Passwords do not match.");
         return false;
     }
 
@@ -164,6 +143,7 @@ document.getElementById("phone").addEventListener("input", function() {
     padding: 35px 30px;
     border-radius: 16px;
     box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+    margin-bottom: 80px; /* Added to account for fixed footer */
 }
 
 .btn-back {
