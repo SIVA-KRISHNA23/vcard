@@ -1,7 +1,7 @@
 import os
 import sqlite3
 import qrcode
-from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response, jsonify  # <-- Added jsonify
+from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response, jsonify
 from werkzeug.utils import secure_filename
 from config import Config
 import csv
@@ -26,7 +26,11 @@ def init_db():
         email TEXT NOT NULL UNIQUE,
         phone TEXT NOT NULL,
         address TEXT NOT NULL,
-        photo TEXT
+        photo TEXT,
+        designation TEXT,
+        company TEXT,
+        gender TEXT,
+        qrcode TEXT
     )
     ''')
     
@@ -76,13 +80,11 @@ def login():
 
     return render_template('login.html', logo='static/logo.png')
 
-
 @app.route('/logout')
 def logout():
     session.pop('admin', None)
     flash('You have been logged out successfully!', 'success') 
     return redirect(url_for('login'))
-
 
 @app.route('/dashboard')
 def dashboard():
@@ -127,7 +129,7 @@ def create_user():
         conn.commit()
 
         # vCard URL (local link)
-        vcard_url = url_for('vcard', user_id=user_id, _external=True)
+        vcard_url = url_for('vcard', user_id=user_id, _external=True, _scheme='https')
 
         # Generate QR code
         qr_img = qrcode.QRCode(
@@ -147,7 +149,7 @@ def create_user():
         conn.commit()
         conn.close()
 
-        return redirect(url_for('dashboard',message="User created successfully!"))
+        return redirect(url_for('dashboard', message="User created successfully!"))
 
     return render_template('create_user.html', logo='static/logo.png')
 
@@ -181,6 +183,49 @@ END:VCARD
 
     return send_file(filepath, as_attachment=True)
 
+# ----------------- Delete User -----------------
+@app.route('/delete_user/<int:user_id>', methods=['POST'])
+def delete_user(user_id):
+    if 'admin' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    
+    if user:
+        # Delete photo if exists
+        if user['photo']:
+            photo_path = os.path.join(app.config['UPLOAD_FOLDER'], user['photo'])
+            if os.path.exists(photo_path):
+                os.remove(photo_path)
+        
+        # Delete QR code if exists
+        if user['qrcode']:
+            qr_path = os.path.join(app.config['QRCODE_FOLDER'], user['qrcode'])
+            if os.path.exists(qr_path):
+                os.remove(qr_path)
+        
+        # Delete user from database
+        conn.execute("DELETE FROM users WHERE id=?", (user_id,))
+        conn.commit()
+        flash('User deleted successfully!', 'success')
+    else:
+        flash('User not found!', 'danger')
+    
+    conn.close()
+    return redirect(url_for('dashboard'))
+
+# ----------------- Scanners Page -----------------
+@app.route('/scanners')
+def scanners():
+    if 'admin' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    users = conn.execute("SELECT * FROM users").fetchall()
+    conn.close()
+    return render_template('scanners.html', users=users, logo='static/logo.png')
+
 # ----------------- CSV & ZIP -----------------
 @app.route('/export_users')
 def export_users():
@@ -193,12 +238,21 @@ def export_users():
 
     si = StringIO()
     cw = csv.writer(si)
-    cw.writerow(['ID', 'Name', 'DOB', 'Email', 'Phone', 'Address', 'Designation', 'Company', 'Gender'])
+    cw.writerow(['ID', 'Name', 'DOB', 'Email', 'Phone', 'Address', 'Designation', 'Company', 'Gender', 'Photo', 'QR Code'])
     for user in users:
+        # Generate full URLs for photo and QR code
+        photo_url = ""
+        if user['photo']:
+            photo_url = url_for('static', filename='uploads/' + user['photo'], _external=True)
+        
+        qr_code_url = ""
+        if user['qrcode']:
+            qr_code_url = url_for('static', filename='qrcodes/' + user['qrcode'], _external=True)
+        
         cw.writerow([
             user['id'], user['name'], user['dob'], user['email'],
             user['phone'], user['address'], user['designation'],
-            user['company'], user['gender']
+            user['company'], user['gender'], photo_url, qr_code_url
         ])
     
     output = si.getvalue()
