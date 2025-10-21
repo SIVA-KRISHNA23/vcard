@@ -1,6 +1,7 @@
 import os
 import sqlite3
 import qrcode
+from PIL import Image
 from flask import Flask, render_template, request, redirect, url_for, session, flash, send_file, Response, jsonify
 from werkzeug.utils import secure_filename
 from config import Config
@@ -60,6 +61,35 @@ def get_db():
     conn = sqlite3.connect('vcard.db')
     conn.row_factory = sqlite3.Row
     return conn
+
+# Function to add logo to QR code
+def add_logo_to_qr(qr_img, logo_path):
+    # Open the logo image
+    try:
+        logo = Image.open(logo_path)
+        
+        # Calculate logo size (about 1/5 of QR code size)
+        qr_width, qr_height = qr_img.size
+        logo_size = min(qr_width, qr_height) // 5
+        
+        # Resize logo
+        logo = logo.resize((logo_size, logo_size), Image.LANCZOS)
+        
+        # Calculate position to center the logo
+        pos = ((qr_width - logo_size) // 2, (qr_height - logo_size) // 2)
+        
+        # Create a transparent overlay for the logo
+        qr_img = qr_img.convert("RGBA")
+        overlay = Image.new('RGBA', qr_img.size, (255, 255, 255, 0))
+        overlay.paste(logo, pos, mask=logo if logo.mode == 'RGBA' else None)
+        
+        # Composite the QR code with the logo overlay
+        qr_img = Image.alpha_composite(qr_img, overlay)
+        
+        return qr_img
+    except Exception as e:
+        print(f"Error adding logo to QR code: {e}")
+        return qr_img
 
 # ----------------- Routes -----------------
 @app.route('/')
@@ -128,21 +158,30 @@ def create_user():
         user_id = cur.lastrowid
         conn.commit()
 
-        # vCard URL (local link)
-        vcard_url = url_for('vcard', user_id=user_id, _external=True, _scheme='https')
+        # vCard URL (points to vcard.html page, not download)
+        vcard_url = url_for('vcard', user_id=user_id, _external=True)
 
-        # Generate QR code
-        qr_img = qrcode.QRCode(
+        # Generate QR code with high error correction for logo
+        qr = qrcode.QRCode(
             version=1,
-            error_correction=qrcode.constants.ERROR_CORRECT_H,
+            error_correction=qrcode.constants.ERROR_CORRECT_H,  # High error correction for logo
             box_size=10,
             border=4
         )
-        qr_img.add_data(vcard_url)
-        qr_img.make(fit=True)
-        img = qr_img.make_image(fill_color="black", back_color="white")
+        qr.add_data(vcard_url)
+        qr.make(fit=True)
+        
+        # Create QR code image
+        qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGBA')
+        
+        # Add logo to QR code
+        logo_path = os.path.join('static', 'company_logo.jpg')
+        if os.path.exists(logo_path):
+            qr_img = add_logo_to_qr(qr_img, logo_path)
+        
+        # Save QR code
         qr_path = os.path.join(app.config['QRCODE_FOLDER'], f"user_{user_id}.png")
-        img.save(qr_path)
+        qr_img.save(qr_path)
 
         # Update DB with QR code filename
         conn.execute("UPDATE users SET qrcode=? WHERE id=?", (f"user_{user_id}.png", user_id))
@@ -182,6 +221,48 @@ END:VCARD
         f.write(vcard_data)
 
     return send_file(filepath, as_attachment=True)
+
+# New route to download QR code with logo
+@app.route('/download_qr/<int:user_id>')
+def download_qr(user_id):
+    if 'admin' not in session:
+        return redirect(url_for('login'))
+    
+    conn = get_db()
+    user = conn.execute("SELECT * FROM users WHERE id=?", (user_id,)).fetchone()
+    conn.close()
+    
+    if not user:
+        flash('User not found!', 'danger')
+        return redirect(url_for('dashboard'))
+    
+    # vCard URL (points to vcard.html page, not download)
+    vcard_url = url_for('vcard', user_id=user_id, _external=True)
+    
+    # Generate QR code with high error correction for logo
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_H,  # High error correction for logo
+        box_size=10,
+        border=4
+    )
+    qr.add_data(vcard_url)
+    qr.make(fit=True)
+    
+    # Create QR code image
+    qr_img = qr.make_image(fill_color="black", back_color="white").convert('RGBA')
+    
+    # Add logo to QR code
+    logo_path = os.path.join('static', 'company_logo.jpg')
+    if os.path.exists(logo_path):
+        qr_img = add_logo_to_qr(qr_img, logo_path)
+    
+    # Save QR code temporarily
+    temp_qr_path = os.path.join(app.config['QRCODE_FOLDER'], f"temp_user_{user_id}.png")
+    qr_img.save(temp_qr_path)
+    
+    # Send the file
+    return send_file(temp_qr_path, as_attachment=True, download_name=f"{user['name']}_QR.png")
 
 # ----------------- Delete User -----------------
 @app.route('/delete_user/<int:user_id>', methods=['POST'])
