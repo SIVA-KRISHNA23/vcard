@@ -1,0 +1,356 @@
+{% set disable_main = True %}
+{% extends 'base.html' %}
+{% block content %}
+<div class="scanners-container">
+    <div class="scanners-header">
+        <h2>QR Code Scanners</h2>
+        <a href="{{ url_for('dashboard') }}" class="btn-back">← Back to Dashboard</a>
+    </div>
+
+    <!-- Controls -->
+    <div class="dashboard-controls">
+        <input type="text" id="searchInput" placeholder="Search by name/designation" onkeyup="filterScanners()">
+        <a href="{{ url_for('create_user') }}" class="btn-create">+ Create New User</a>
+        <a href="{{ url_for('export_users') }}" class="btn-create btn-csv">Export All CSV</a>
+    </div>
+
+    <div class="scanners-grid" id="scannersGrid">
+        {% for user in users %}
+        <div class="scanner-card">
+            <div class="scanner-header">
+                 <h3>{{ user['name'] }}</h3>
+            </div>
+            
+            {% if user['qrcode'] %}
+            <div class="scanner-container">
+                <div class="qr-wrapper">
+                    <img src="{{ url_for('static', filename='qrcodes/' ~ user['qrcode']) }}" alt="QR Code" class="scanner-qr">
+                    <img src="{{ url_for('static', filename='images/company_logo.jpg') }}" alt="Company Logo" class="company-logo-on-qr">
+                </div>
+            </div>
+            {% endif %}
+            
+            <div class="scanner-info">
+                <p><i class="fas fa-briefcase"></i> {{ user['designation'] or 'N/A' }}</p>
+            </div>
+            
+            <div class="scanner-actions">
+                <a href="{{ url_for('vcard', user_id=user['id']) }}" class="btn-view">View VCard</a>
+                <button class="btn-delete" data-user-id="{{ user['id'] }}" data-user-name="{{ user['name'] | e }}">Delete</button>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+
+<footer class="dashboard-footer">
+    Powered by <b>BHSPL</b>
+</footer>
+
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.4/css/all.min.css">
+<script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add click event listeners to all delete buttons
+    const deleteButtons = document.querySelectorAll('.btn-delete');
+    
+    deleteButtons.forEach(button => {
+        button.addEventListener('click', function() {
+            const userId = this.getAttribute('data-user-id');
+            const userName = this.getAttribute('data-user-name');
+            
+            Swal.fire({
+                title: 'Are you sure?',
+                text: `You are about to delete ${userName}'s scanner. This action cannot be undone.`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#dc3545',
+                cancelButtonColor: '#7b2cbf',
+                confirmButtonText: 'Yes, delete it!',
+                cancelButtonText: 'Cancel'
+            }).then((result) => {
+                if (result.isConfirmed) {
+                    // Create a form and submit it
+                    const form = document.createElement('form');
+                    form.method = 'POST';
+                    form.action = `/delete_user/${userId}`;
+                    
+                    document.body.appendChild(form);
+                    form.submit();
+                }
+            });
+        });
+    });
+});
+
+function filterScanners() {
+    const input = document.getElementById('searchInput').value.toLowerCase();
+    const cards = document.querySelectorAll('.scanner-card');
+    cards.forEach(card => {
+        const name = card.querySelector('h3').innerText.toLowerCase();
+        const designation = card.querySelector('.scanner-info p').innerText.toLowerCase();
+        if(name.includes(input) || designation.includes(input)) {
+            card.style.display = '';
+        } else {
+            card.style.display = 'none';
+        }
+    });
+}
+</script>
+
+<style>
+.scanners-container {
+    max-width: 1200px;
+    margin: 30px auto;
+    padding: 0 20px 80px; /* Added bottom padding for fixed footer */
+}
+
+.scanners-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 25px;
+    border-bottom: 2px solid rgba(255,255,255,0.3);
+    padding-bottom: 10px;
+}
+
+.scanners-header h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.btn-back {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-back:hover {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+/* Controls */
+.dashboard-controls {
+    display: flex;
+    align-items: center;
+    margin-bottom: 25px;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.dashboard-controls input[type="text"] {
+    padding: 10px 14px;
+    border-radius: 8px;
+    border: none;
+    flex: 1;
+    min-width: 200px;
+    font-size: 1rem;
+    background: #fff;
+    color: #333;
+    transition: 0.3s;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+}
+
+.dashboard-controls input[type="text"]:focus {
+    outline: none;
+    box-shadow: 0 0 8px rgba(139,0,0,0.4);
+}
+
+/* Buttons */
+.btn-create {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 10px 18px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    box-shadow: 0 3px 6px rgba(0,0,0,0.2);
+}
+
+.btn-create:hover {
+    background: linear-gradient(135deg, #b3124a, #7b2cbf);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+    transform: translateY(-2px);
+}
+
+/* CSV Export Button */
+.btn-csv {
+    background: linear-gradient(135deg, #28a745, #20c997);
+}
+
+.btn-csv:hover {
+    background: linear-gradient(135deg, #20c997, #28a745);
+}
+
+.scanners-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 25px;
+}
+
+.scanner-card {
+    background: rgba(255,255,255,0.1);
+    border-radius: 16px;
+    padding: 25px;
+    text-align: center;
+    box-shadow: 0 8px 22px rgba(0,0,0,0.25);
+    transition: transform 0.3s, box-shadow 0.3s;
+    color: #fff;
+}
+
+.scanner-card:hover {
+    transform: translateY(-6px);
+    box-shadow: 0 14px 28px rgba(0,0,0,0.4);
+}
+
+.scanner-header {
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid rgba(255,255,255,0.2);
+}
+
+.scanner-header h3 {
+    font-size: 1.5rem;
+    font-weight: 700;
+    margin: 0;
+    color: #fff;
+    text-transform: capitalize;
+}
+
+.company-logo {
+    height: 60px;
+    border-radius: 8px;
+}
+
+.scanner-container {
+    display: flex;
+    justify-content: center;
+    margin: 20px 0;
+}
+
+.qr-wrapper {
+    position: relative;
+    width: 220px;
+    height: 220px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.scanner-qr {
+    width: 200px;
+    height: 200px;
+    border-radius: 10px;
+    border: 3px solid #fff;
+    z-index: 1;
+}
+
+.company-logo-on-qr {
+    position: absolute;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+    border: 3px solid #fff;
+    z-index: 2;
+    box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+.scanner-info {
+    margin: 20px 0;
+}
+
+.scanner-info h3 {
+    font-size: 1.5rem;
+    margin-bottom: 5px;
+}
+
+.scanner-info p {
+    font-size: 1.1rem;
+    opacity: 0.9;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10px;
+}
+
+.scanner-info i {
+    color: #fff;
+    width: 20px;
+    text-align: center;
+}
+
+.scanner-actions {
+    display: flex;
+    justify-content: center;
+    gap: 15px;
+    margin-top: 20px;
+}
+
+.btn-view {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    text-decoration: none;
+    font-weight: 600;
+    transition: 0.3s;
+}
+
+.btn-view:hover {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+.btn-delete {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    text-decoration: none;
+    font-weight: 600;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.btn-delete:hover {
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+}
+
+.dashboard-footer {
+    text-align: center;
+    padding: 15px 0;
+    background: linear-gradient(90deg, #b3124a, #7b2cbf);
+    color: #fff;
+    font-weight: 600;
+    border-top: 1px solid rgba(255,255,255,0.3);
+    border-radius: 0 0 16px 16px;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    z-index: 100;
+}
+
+@media(max-width: 768px){
+    .scanners-grid {
+        grid-template-columns: 1fr;
+    }
+    
+    .scanners-header {
+        flex-direction: column;
+        gap: 15px;
+    }
+    
+    .dashboard-controls {
+        flex-direction: column;
+        gap: 10px;
+    }
+}
+</style>
+{% endblock %}
